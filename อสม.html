@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บันทึกการเยี่ยมบ้านผู้ป่วย - อสม.</title>
+<style>
+  :root{
+    --primary:#0a6ebd;        /* น้ำเงินการแพทย์ */
+    --primary-dark:#084c85;
+    --bg:#eef4f8;
+    --card:#ffffff;
+    --text:#1f2d3d;
+    --muted:#6b7c8f;
+    --ok:#1e9e5a;             /* เขียว ปกติ */
+    --ok-bg:#e6f6ec;
+    --warn:#e0912a;           /* เหลือง/ส้ม เฝ้าระวัง */
+    --warn-bg:#fdf3e2;
+    --danger:#d63333;         /* แดง อันตราย */
+    --danger-bg:#fdeaea;
+    --border:#d7e2ec;
+    --shadow:0 2px 8px rgba(10,60,110,.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;font-family:"Segoe UI","Sarabun",Tahoma,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.5;
+  }
+  header{
+    background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+    color:#fff;padding:18px 20px;box-shadow:var(--shadow);
+    position:sticky;top:0;z-index:50;
+  }
+  header h1{margin:0;font-size:1.25rem;display:flex;align-items:center;gap:10px;}
+  header .sub{font-size:.82rem;opacity:.9;margin-top:2px;}
+  .wrap{max-width:1150px;margin:0 auto;padding:18px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:16px 18px;box-shadow:var(--shadow);
+  }
+  .card h2{
+    margin:0 0 12px;font-size:1.02rem;color:var(--primary-dark);
+    display:flex;align-items:center;gap:8px;border-bottom:2px solid var(--bg);
+    padding-bottom:8px;
+  }
+  .card h2 .ico{font-size:1.15rem;}
+  label{display:block;font-size:.82rem;color:var(--muted);margin:8px 0 3px;}
+  input,select,textarea{
+    width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;
+    font-size:.92rem;font-family:inherit;background:#fbfdff;
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--primary);border-color:var(--primary);}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .status{
+    display:inline-block;padding:2px 10px;border-radius:20px;font-size:.78rem;
+    font-weight:600;margin-top:6px;
+  }
+  .s-ok{background:var(--ok-bg);color:var(--ok);}
+  .s-warn{background:var(--warn-bg);color:var(--warn);}
+  .s-danger{background:var(--danger-bg);color:var(--danger);}
+  .field-note{font-size:.75rem;color:var(--muted);margin-top:2px;}
+  .checkbox-list label{
+    display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--text);
+    margin:6px 0;cursor:pointer;
+  }
+  .checkbox-list input{width:auto;}
+  .summary{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:18px;box-shadow:var(--shadow);margin-top:16px;
+  }
+  .risk-banner{
+    padding:14px 18px;border-radius:12px;font-weight:700;font-size:1.05rem;
+    display:flex;align-items:center;gap:12px;margin-bottom:14px;
+  }
+  .findings{list-style:none;padding:0;margin:0;}
+  .findings li{
+    padding:8px 12px;border-radius:8px;margin:6px 0;font-size:.9rem;
+    display:flex;align-items:center;gap:8px;
+  }
+  .emergency{
+    background:var(--danger);color:#fff;border-radius:14px;padding:16px 18px;
+    margin-top:16px;text-align:center;box-shadow:0 4px 14px rgba(214,51,51,.35);
+  }
+  .emergency .tel{font-size:2.2rem;font-weight:800;letter-spacing:2px;margin:4px 0;}
+  .emergency a{color:#fff;text-decoration:none;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
+  button{
+    background:var(--primary);color:#fff;border:none;padding:11px 20px;
+    border-radius:10px;font-size:.95rem;font-weight:600;cursor:pointer;
+    font-family:inherit;
+  }
+  button.ghost{background:#fff;color:var(--primary);border:1px solid var(--primary);}
+  button:hover{filter:brightness(1.05);}
+  .gauge{
+    height:8px;border-radius:6px;background:#e5ecf3;overflow:hidden;margin-top:6px;
+  }
+  .gauge > span{display:block;height:100%;transition:width .3s;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.8rem;margin-top:6px;}
+  .legend span{display:flex;align-items:center;gap:5px;}
+  .dot{width:12px;height:12px;border-radius:50%;display:inline-block;}
+  @media print{
+    header{position:static;} button,.btn-row{display:none;}
+    body{background:#fff;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap" style="padding:0;">
+    <h1>🩺 บันทึกการเยี่ยมบ้านผู้ป่วย โดย อสม.</h1>
+    <div class="sub">ระบบประเมินอัตโนมัติ • แจ้งเตือนตามเกณฑ์ • สำหรับ อสม. และบุคลากรทางการแพทย์</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ข้อมูลผู้ป่วย -->
+  <div class="card" style="margin-bottom:16px;">
+    <h2><span class="ico">👤</span> ข้อมูลผู้ป่วยและการเยี่ยม</h2>
+    <div class="row3">
+      <div><label>ชื่อ-สกุลผู้ป่วย</label><input id="pName" placeholder="ชื่อ นามสกุล"></div>
+      <div><label>อายุ (ปี)</label><input id="pAge" type="number" min="0"></div>
+      <div><label>HN / เลขประจำตัว</label><input id="pHN" placeholder="เลขที่"></div>
+    </div>
+    <div class="row3">
+      <div><label>วันที่เยี่ยม</label><input id="vDate" type="date"></div>
+      <div><label>ชื่อ อสม.</label><input id="asmName" placeholder="ผู้บันทึก"></div>
+      <div><label>หมู่บ้าน / เขต</label><input id="area" placeholder="พื้นที่"></div>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- 1. สัญญาณชีพ -->
+    <div class="card">
+      <h2><span class="ico">❤️</span> 1. สัญญาณชีพ (Vital Signs)</h2>
+      <div class="row">
+        <div>
+          <label>ความดัน SBP (mmHg)</label>
+          <input id="sbp" type="number" oninput="assess()">
+        </div>
+        <div>
+          <label>ความดัน DBP (mmHg)</label>
+          <input id="dbp" type="number" oninput="assess()">
+        </div>
+      </div>
+      <div class="row3">
+        <div>
+          <label>ชีพจร (ครั้ง/นาที)</label>
+          <input id="pulse" type="number" oninput="assess()">
+        </div>
+        <div>
+          <label>หายใจ (ครั้ง/นาที)</label>
+          <input id="rr" type="number" oninput="assess()">
+        </div>
+        <div>
+          <label>อุณหภูมิ (°C)</label>
+          <input id="temp" type="number" step="0.1" oninput="assess()">
+        </div>
+      </div>
+      <div>
+        <label>ค่าออกซิเจนปลายนิ้ว SpO₂ (%)</label>
+        <input id="spo2" type="number" oninput="assess()">
+      </div>
+      <div id="vitalStatus" class="status s-ok">รอข้อมูล</div>
+    </div>
+
+    <!-- 2. แผลกดทับ -->
+    <div class="card">
+      <h2><span class="ico">🩹</span> 2. แผลกดทับ (Pressure Ulcer)</h2>
+      <label>ระยะ (Stage)</label>
+      <select id="pu_stage" onchange="assess()">
+        <option value="0">ไม่มีแผลกดทับ</option>
+        <option value="1">ระยะ 1 - ผิวแดง กดไม่จางหาย</option>
+        <option value="2">ระยะ 2 - ผิวถลอก/พองเป็นแผลตื้น</option>
+        <option value="3">ระยะ 3 - แผลลึกถึงชั้นไขมัน</option>
+        <option value="4">ระยะ 4 - ลึกถึงกล้ามเนื้อ/กระดูก</option>
+      </select>
+      <label>ตำแหน่ง</label>
+      <input id="pu_site" placeholder="เช่น ก้นกบ ส้นเท้า สะโพก">
+      <div class="checkbox-list">
+        <label><input type="checkbox" id="pu_pus" onchange="assess()"> มีหนอง/กลิ่นเหม็น</label>
+        <label><input type="checkbox" id="pu_red" onchange="assess()"> รอบแผลบวมแดง ร้อน</label>
+      </div>
+      <div id="puStatus" class="status s-ok">รอข้อมูล</div>
+    </div>
+
+    <!-- 3. ปอดติดเชื้อ -->
+    <div class="card">
+      <h2><span class="ico">🫁</span> 3. ภาวะปอดติดเชื้อ (Pneumonia)</h2>
+      <div class="checkbox-list">
+        <label><input type="checkbox" id="lu_cough" onchange="assess()"> ไอมีเสมหะ / เสมหะข้นเหลืองเขียว</label>
+        <label><input type="checkbox" id="lu_dyspnea" onchange="assess()"> หายใจเหนื่อยหอบ / หายใจเร็ว</label>
+        <label><input type="checkbox" id="lu_fever" onchange="assess()"> มีไข้ร่วมกับอาการทางเดินหายใจ</label>
+        <label><input type="checkbox" id="lu_sound" onchange="assess()"> ได้ยินเสียงครืดคราด/หายใจมีเสียง</label>
+        <label><input type="checkbox" id="lu_cyanosis" onchange="assess()"> ปากเขียว/ปลายมือปลายเท้าเขียว</label>
+      </div>
+      <div id="luStatus" class="status s-ok">รอข้อมูล</div>
+    </div>
+
+    <!-- 4. ติดเชื้อทางเดินปัสสาวะ -->
+    <div class="card">
+      <h2><span class="ico">💧</span> 4. ติดเชื้อทางเดินปัสสาวะ (UTI)</h2>
+      <div class="checkbox-list">
+        <label><input type="checkbox" id="uti_burn" onchange="assess()"> ปัสสาวะแสบขัด / ปวดเวลาถ่าย</label>
+        <label><input type="checkbox" id="uti_freq" onchange="assess()"> ปัสสาวะบ่อย / กลั้นไม่อยู่</label>
+        <label><input type="checkbox" id="uti_color" onchange="assess()"> ปัสสาวะขุ่น/มีเลือด/กลิ่นแรง</label>
+        <label><input type="checkbox" id="uti_fever" onchange="assess()"> มีไข้ / ปวดหลังบั้นเอว</label>
+        <label><input type="checkbox" id="uti_cath" onchange="assess()"> คาสายสวนปัสสาวะ</label>
+      </div>
+      <div id="utiStatus" class="status s-ok">รอข้อมูล</div>
+    </div>
+
+    <!-- 5. ข้อยึดติด -->
+    <div class="card">
+      <h2><span class="ico">🦴</span> 5. ภาวะข้อยึดติด (Contracture)</h2>
+      <label>ระดับการเคลื่อนไหวข้อ</label>
+      <select id="joint" onchange="assess()">
+        <option value="0">เคลื่อนไหวได้ปกติ</option>
+        <option value="1">ข้อฝืด เคลื่อนไหวได้ลดลงเล็กน้อย</option>
+        <option value="2">ข้อยึดติดบางข้อ เคลื่อนไหวจำกัด</option>
+        <option value="3">ข้อยึดติดหลายข้อ / ติดแข็ง</option>
+      </select>
+      <label>ตำแหน่งข้อที่มีปัญหา</label>
+      <input id="joint_site" placeholder="เช่น เข่า ข้อศอก ข้อเท้า">
+      <div class="checkbox-list">
+        <label><input type="checkbox" id="joint_pain" onchange="assess()"> มีอาการปวดเมื่อขยับ</label>
+      </div>
+      <div id="jointStatus" class="status s-ok">รอข้อมูล</div>
+    </div>
+
+    <!-- 6. ภาวะโภชนาการ -->
+    <div class="card">
+      <h2><span class="ico">🍚</span> 6. ภาวะโภชนาการ (Nutrition)</h2>
+      <div class="row">
+        <div><label>น้ำหนัก (กก.)</label><input id="wt" type="number" step="0.1" oninput="assess()"></div>
+        <div><label>ส่วนสูง (ซม.)</label><input id="ht" type="number" oninput="assess()"></div>
+      </div>
+      <label>การรับประทานอาหาร</label>
+      <select id="intake" onchange="assess()">
+        <option value="0">รับประทานได้ดี</option>
+        <option value="1">รับประทานได้ลดลง</option>
+        <option value="2">รับประทานได้น้อยมาก / ทางสายยาง</option>
+      </select>
+      <div class="checkbox-list">
+        <label><input type="checkbox" id="wtloss" onchange="assess()"> น้ำหนักลดชัดเจนในช่วงที่ผ่านมา</label>
+        <label><input type="checkbox" id="edema" onchange="assess()"> บวมตามตัว / ซีด</label>
+      </div>
+      <div id="nutStatus" class="status s-ok">รอข้อมูล</div>
+      <div class="field-note" id="bmiText"></div>
+    </div>
+
+    <!-- 7. ความสะอาดสิ่งแวดล้อม -->
+    <div class="card">
+      <h2><span class="ico">🏠</span> 7. ความสะอาดสิ่งแวดล้อม</h2>
+      <div class="checkbox-list">
+        <label><input type="checkbox" id="env_clean" onchange="assess()"> ที่นอน/เสื้อผ้าสะอาด แห้ง</label>
+        <label><input type="checkbox" id="env_air" onchange="assess()"> อากาศถ่ายเท แสงสว่างเพียงพอ</label>
+        <label><input type="checkbox" id="env_toilet" onchange="assess()"> ห้องน้ำ/สุขาสะอาด ใช้ได้</label>
+        <label><input type="checkbox" id="env_safe" onchange="assess()"> พื้นไม่ลื่น ปลอดภัยต่อการล้ม</label>
+        <label><input type="checkbox" id="env_care" onchange="assess()"> มีผู้ดูแลใกล้ชิด</label>
+      </div>
+      <div id="envStatus" class="status s-ok">รอข้อมูล</div>
+    </div>
+
+    <!-- บันทึกเพิ่มเติม -->
+    <div class="card">
+      <h2><span class="ico">📝</span> บันทึกเพิ่มเติม / การดำเนินการ</h2>
+      <textarea id="note" rows="6" placeholder="อาการอื่น ๆ / คำแนะนำที่ให้ / การส่งต่อ / นัดครั้งถัดไป"></textarea>
+    </div>
+
+  </div><!-- /grid -->
+
+  <!-- สรุปผลรวม -->
+  <div class="summary">
+    <h2 style="margin-top:0;color:var(--primary-dark)">📊 สรุปผลการประเมินโดยรวม</h2>
+    <div id="riskBanner" class="risk-banner s-ok" style="background:var(--ok-bg);color:var(--ok)">
+      🟢 รอบันทึกข้อมูล
+    </div>
+    <div class="gauge"><span id="riskGauge" style="width:0;background:var(--ok)"></span></div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--ok)"></i> ปกติ</span>
+      <span><i class="dot" style="background:var(--warn)"></i> เฝ้าระวัง</span>
+      <span><i class="dot" style="background:var(--danger)"></i> อันตราย/ต้องส่งต่อ</span>
+    </div>
+    <h3 style="font-size:.95rem;margin:16px 0 6px;">รายการที่พบและข้อเสนอแนะ</h3>
+    <ul class="findings" id="findings"><li style="color:var(--muted)">ยังไม่มีข้อมูล</li></ul>
+  </div>
+
+  <!-- ฉุกเฉิน -->
+  <div id="emergencyBox" class="emergency" style="display:none;">
+    <div>⚠️ พบภาวะฉุกเฉิน — ต้องส่งต่อ/ขอความช่วยเหลือทันที</div>
+    <div class="tel">📞 <a href="tel:1669">โทร 1669</a></div>
+    <div style="font-size:.9rem;">สายด่วนการแพทย์ฉุกเฉิน (สพฉ.) ตลอด 24 ชั่วโมง</div>
+  </div>
+
+  <div class="btn-row">
+    <button onclick="window.print()">🖨️ พิมพ์ / บันทึก PDF</button>
+    <button class="ghost" onclick="resetForm()">♻️ ล้างข้อมูล</button>
+  </div>
+
+  <p style="font-size:.75rem;color:var(--muted);text-align:center;margin-top:20px;">
+    เครื่องมือช่วยคัดกรองเบื้องต้นสำหรับ อสม. ผลการประเมินไม่ทดแทนการวินิจฉัยของแพทย์
+    หากสงสัยภาวะฉุกเฉินให้โทร 1669 ทันที
+  </p>
+</div>
+
+<script>
+// ตั้งวันที่เยี่ยมเป็นวันนี้
+document.getElementById('vDate').valueAsDate = new Date();
+
+function setStatus(id,level,text){
+  const el=document.getElementById(id);
+  el.className='status '+(level==='danger'?'s-danger':level==='warn'?'s-warn':'s-ok');
+  el.textContent=text;
+}
+const num = id => { const v=parseFloat(document.getElementById(id).value); return isNaN(v)?null:v; };
+const chk = id => document.getElementById(id).checked;
+const val = id => document.getElementById(id).value;
+
+function assess(){
+  let emergency=false;
+  const findings=[]; // {level, text}
+  let score=0; // สะสมระดับความเสี่ยง
+
+  /* 1) สัญญาณชีพ */
+  const sbp=num('sbp'),dbp=num('dbp'),pulse=num('pulse'),rr=num('rr'),temp=num('temp'),spo2=num('spo2');
+  let vLevel='ok', vMsg='ปกติ';
+  const vFlags=[];
+  if(sbp!==null){
+    if(sbp>=180||sbp<90){vFlags.push('ความดันตัวบนผิดปกติมาก');vLevel='danger';}
+    else if(sbp>=140){vFlags.push('ความดันสูง');if(vLevel!=='danger')vLevel='warn';}
+  }
+  if(dbp!==null && dbp>=110){vFlags.push('ความดันตัวล่างสูงมาก');vLevel='danger';}
+  if(pulse!==null){
+    if(pulse>120||pulse<50){vFlags.push('ชีพจรผิดปกติ');vLevel='danger';}
+    else if(pulse>100){vFlags.push('ชีพจรเร็ว');if(vLevel!=='danger')vLevel='warn';}
+  }
+  if(rr!==null){
+    if(rr>=30||rr<10){vFlags.push('อัตราหายใจผิดปกติ');vLevel='danger';}
+    else if(rr>=24){vFlags.push('หายใจเร็ว');if(vLevel!=='danger')vLevel='warn';}
+  }
+  if(temp!==null){
+    if(temp>=39||temp<35){vFlags.push('ไข้สูง/อุณหภูมิต่ำผิดปกติ');vLevel='danger';}
+    else if(temp>=37.8){vFlags.push('มีไข้');if(vLevel!=='danger')vLevel='warn';}
+  }
+  if(spo2!==null){
+    if(spo2<92){vFlags.push('ออกซิเจนต่ำ (SpO₂<92%)');vLevel='danger';}
+    else if(spo2<95){vFlags.push('ออกซิเจนค่อนข้างต่ำ');if(vLevel!=='danger')vLevel='warn';}
+  }
+  if(vFlags.length){vMsg=vFlags.join(', ');}
+  const anyVital=[sbp,dbp,pulse,rr,temp,spo2].some(x=>x!==null);
+  setStatus('vitalStatus', anyVital?vLevel:'ok', anyVital?(vLevel==='danger'?'⚠ อันตราย: ':vLevel==='warn'?'เฝ้าระวัง: ':'ปกติ')+ (vLevel==='ok'?'':vMsg):'รอข้อมูล');
+  if(anyVital){ addScore(vLevel); if(vLevel!=='ok')findings.push({level:vLevel,text:'สัญญาณชีพ: '+vMsg}); if(vLevel==='danger')emergency=true; }
+
+  /* 2) แผลกดทับ */
+  const stage=parseInt(val('pu_stage'));
+  let puLevel='ok',puMsg='ไม่มีแผลกดทับ';
+  if(stage===1){puLevel='warn';puMsg='ระยะ 1 - ดูแลผิว พลิกตัวทุก 2 ชม.';}
+  else if(stage===2){puLevel='warn';puMsg='ระยะ 2 - ทำแผล เฝ้าระวังลุกลาม';}
+  else if(stage>=3){puLevel='danger';puMsg='ระยะ '+stage+' - แผลลึก ควรพบแพทย์/พยาบาลทำแผล';}
+  if(chk('pu_pus')||chk('pu_red')){puLevel='danger';puMsg+=' + มีสัญญาณติดเชื้อที่แผล';}
+  setStatus('puStatus',puLevel, puLevel==='danger'?'⚠ อันตราย: '+puMsg:puLevel==='warn'?'เฝ้าระวัง: '+puMsg:'ปกติ');
+  addScore(puLevel);
+  if(puLevel!=='ok')findings.push({level:puLevel,text:'แผลกดทับ ('+(val('pu_site')||'ไม่ระบุตำแหน่ง')+'): '+puMsg});
+  if(puLevel==='danger')emergency=true;
+
+  /* 3) ปอดติดเชื้อ */
+  let luCount=['lu_cough','lu_dyspnea','lu_fever','lu_sound'].filter(chk).length;
+  let luLevel='ok',luMsg='ไม่พบอาการ';
+  if(chk('lu_cyanosis')||luCount>=3){luLevel='danger';luMsg='สงสัยปอดติดเชื้อรุนแรง ควรส่งต่อด่วน';}
+  else if(luCount>=1){luLevel='warn';luMsg='มีอาการทางเดินหายใจ เฝ้าระวังปอดติดเชื้อ';}
+  setStatus('luStatus',luLevel, luLevel==='danger'?'⚠ อันตราย: '+luMsg:luLevel==='warn'?'เฝ้าระวัง: '+luMsg:'ปกติ');
+  addScore(luLevel);
+  if(luLevel!=='ok')findings.push({level:luLevel,text:'ระบบหายใจ: '+luMsg});
+  if(luLevel==='danger')emergency=true;
+
+  /* 4) UTI */
+  let utiCount=['uti_burn','uti_freq','uti_color'].filter(chk).length;
+  let utiLevel='ok',utiMsg='ไม่พบอาการ';
+  if(chk('uti_fever')||(utiCount>=1&&chk('uti_cath'))){utiLevel='danger';utiMsg='สงสัยติดเชื้อทางเดินปัสสาวะรุนแรง ควรพบแพทย์';}
+  else if(utiCount>=1){utiLevel='warn';utiMsg='มีอาการทางปัสสาวะ เฝ้าระวังการติดเชื้อ';}
+  setStatus('utiStatus',utiLevel, utiLevel==='danger'?'⚠ อันตราย: '+utiMsg:utiLevel==='warn'?'เฝ้าระวัง: '+utiMsg:'ปกติ');
+  addScore(utiLevel);
+  if(utiLevel!=='ok')findings.push({level:utiLevel,text:'ทางเดินปัสสาวะ: '+utiMsg});
+  if(utiLevel==='danger')emergency=true;
+
+  /* 5) ข้อยึดติด */
+  const jt=parseInt(val('joint'));
+  let jLevel='ok',jMsg='เคลื่อนไหวปกติ';
+  if(jt===1){jLevel='warn';jMsg='ข้อฝืด - แนะนำกายภาพ ขยับข้อสม่ำเสมอ';}
+  else if(jt===2){jLevel='warn';jMsg='ข้อยึดติดบางข้อ - ต้องกายภาพบำบัด';}
+  else if(jt===3){jLevel='danger';jMsg='ข้อยึดติดรุนแรง - ควรส่งต่อกายภาพบำบัด';}
+  setStatus('jointStatus',jLevel, jLevel==='danger'?'⚠ อันตราย: '+jMsg:jLevel==='warn'?'เฝ้าระวัง: '+jMsg:'ปกติ');
+  addScore(jLevel);
+  if(jLevel!=='ok')findings.push({level:jLevel,text:'ข้อยึดติด ('+(val('joint_site')||'ไม่ระบุ')+'): '+jMsg});
+
+  /* 6) โภชนาการ */
+  const wt=num('wt'),ht=num('ht'); let bmi=null;
+  if(wt&&ht){bmi=wt/Math.pow(ht/100,2);}
+  document.getElementById('bmiText').textContent = bmi?('BMI = '+bmi.toFixed(1)+' kg/m²'):'';
+  const intake=parseInt(val('intake'));
+  let nLevel='ok',nMsg='ภาวะโภชนาการดี';
+  const nFlags=[];
+  if(bmi!==null){
+    if(bmi<16){nFlags.push('ผอมมาก (BMI<16)');nLevel='danger';}
+    else if(bmi<18.5){nFlags.push('น้ำหนักต่ำกว่าเกณฑ์');if(nLevel!=='danger')nLevel='warn';}
+    else if(bmi>=30){nFlags.push('อ้วน (BMI≥30)');if(nLevel!=='danger')nLevel='warn';}
+  }
+  if(intake===1){nFlags.push('กินได้ลดลง');if(nLevel!=='danger')nLevel='warn';}
+  if(intake===2){nFlags.push('กินได้น้อยมาก/ทางสายยาง');nLevel='danger';}
+  if(chk('wtloss')){nFlags.push('น้ำหนักลด');if(nLevel!=='danger')nLevel='warn';}
+  if(chk('edema')){nFlags.push('บวม/ซีด');if(nLevel!=='danger')nLevel='warn';}
+  if(nFlags.length)nMsg=nFlags.join(', ');
+  const anyNut = bmi!==null||intake>0||chk('wtloss')||chk('edema');
+  setStatus('nutStatus', anyNut?nLevel:'ok', anyNut?(nLevel==='danger'?'⚠ เสี่ยงทุพโภชนาการ: ':nLevel==='warn'?'เฝ้าระวัง: ':'ปกติ')+(nLevel==='ok'?'':nMsg):'รอข้อมูล');
+  if(anyNut){addScore(nLevel); if(nLevel!=='ok')findings.push({level:nLevel,text:'โภชนาการ: '+nMsg});}
+
+  /* 7) สิ่งแวดล้อม */
+  const envKeys=['env_clean','env_air','env_toilet','env_safe','env_care'];
+  const envPass=envKeys.filter(chk).length;
+  let eLevel='ok',eMsg='สิ่งแวดล้อมเหมาะสม';
+  if(envPass<=2){eLevel='danger';eMsg='สิ่งแวดล้อมไม่เหมาะสม เสี่ยงต่อสุขภาพ ควรปรับปรุงเร่งด่วน';}
+  else if(envPass<=4){eLevel='warn';eMsg='ควรปรับปรุงบางจุด ('+envPass+'/5 ผ่านเกณฑ์)';}
+  else{eMsg='ผ่านเกณฑ์ครบ (5/5)';}
+  setStatus('envStatus',eLevel, eLevel==='danger'?'⚠ ต้องปรับปรุง: '+eMsg:eLevel==='warn'?'เฝ้าระวัง: '+eMsg:'ดี: '+eMsg);
+  addScore(eLevel);
+  if(eLevel!=='ok')findings.push({level:eLevel,text:'สิ่งแวดล้อม: '+eMsg});
+
+  /* ---- สรุปรวม ---- */
+  renderSummary(findings, emergency);
+
+  // ฟังก์ชันสะสมคะแนน (ใช้ scope ภายใน)
+  function addScore(level){ score += level==='danger'?2 : level==='warn'?1 : 0; }
+  function renderSummary(list, emg){
+    const banner=document.getElementById('riskBanner');
+    const gauge=document.getElementById('riskGauge');
+    const ul=document.getElementById('findings');
+    // จัดระดับรวม
+    let overall='ok';
+    if(emg || score>=6) overall='danger';
+    else if(score>=1) overall='warn';
+
+    if(overall==='danger'){
+      banner.style.background='var(--danger-bg)';banner.style.color='var(--danger)';
+      banner.innerHTML='🔴 ความเสี่ยงสูง — ควรส่งต่อ/พบแพทย์';
+      gauge.style.width='100%';gauge.style.background='var(--danger)';
+    }else if(overall==='warn'){
+      banner.style.background='var(--warn-bg)';banner.style.color='var(--warn)';
+      banner.innerHTML='🟡 เฝ้าระวัง — ติดตามอาการใกล้ชิด';
+      gauge.style.width='55%';gauge.style.background='var(--warn)';
+    }else{
+      banner.style.background='var(--ok-bg)';banner.style.color='var(--ok)';
+      banner.innerHTML='🟢 ภาพรวมปกติ — ดูแลตามปกติ นัดเยี่ยมครั้งถัดไป';
+      gauge.style.width='20%';gauge.style.background='var(--ok)';
+    }
+
+    if(list.length===0){
+      ul.innerHTML='<li style="background:var(--ok-bg);color:var(--ok)">✅ ไม่พบความผิดปกติที่ต้องดำเนินการเร่งด่วน</li>';
+    }else{
+      list.sort((a,b)=> (b.level==='danger')-(a.level==='danger'));
+      ul.innerHTML=list.map(f=>{
+        const cls=f.level==='danger'?'s-danger':'s-warn';
+        const ico=f.level==='danger'?'🔴':'🟡';
+        const bg=f.level==='danger'?'var(--danger-bg)':'var(--warn-bg)';
+        const col=f.level==='danger'?'var(--danger)':'var(--warn)';
+        return `<li style="background:${bg};color:${col}">${ico} ${f.text}</li>`;
+      }).join('');
+    }
+
+    document.getElementById('emergencyBox').style.display = emg ? 'block':'none';
+  }
+}
+
+function resetForm(){
+  if(!confirm('ต้องการล้างข้อมูลทั้งหมดหรือไม่?'))return;
+  document.querySelectorAll('input,select,textarea').forEach(el=>{
+    if(el.type==='checkbox')el.checked=false;
+    else if(el.tagName==='SELECT')el.selectedIndex=0;
+    else el.value='';
+  });
+  document.getElementById('vDate').valueAsDate=new Date();
+  assess();
+}
+assess();
+</script>
+</body>
+</html>
